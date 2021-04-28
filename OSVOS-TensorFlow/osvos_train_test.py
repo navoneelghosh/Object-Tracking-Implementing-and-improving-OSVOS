@@ -24,25 +24,18 @@ import osvos
 from dataset import Dataset
 os.chdir(root_folder)
 
-# User defined parameters
-# seq_name = "car-shadow"
-# gpu_id = 0
-# train_model = False
-# result_path = os.path.join('DAVIS', 'Results', 'Segmentations', '480p', 'OSVOS', seq_name)
-# kalman_result_path = os.path.join('DAVIS', 'KalmanResults', 'Segmentations', '480p', 'OSVOS', seq_name)
-
-def train_and_test_osvos(seq_name, gpu_id, result_path, train_model):
+def train_and_test_osvos(seq_name, gpu_id, result_path, train_model, max_train_iters, train_img_name, annot_img_name):
     # Train parameters
     parent_path = os.path.join('models', 'OSVOS_parent', 'OSVOS_parent.ckpt-50000')
     logs_path = os.path.join('models', seq_name)
-    max_training_iters = 2000
+    max_training_iters = max_train_iters
 
     # Define Dataset
     test_frames = sorted(os.listdir(os.path.join('DAVIS', 'JPEGImages', '480p', seq_name)))
     test_imgs = [os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, frame) for frame in test_frames]
     if train_model:
-        train_imgs = [os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, '00000.jpg')+' '+
-                    os.path.join('DAVIS', 'Annotations', '480p', seq_name, '00000.png')]
+        train_imgs = [os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, train_img_name)+' '+
+                    os.path.join('DAVIS', 'Annotations', '480p', seq_name, annot_img_name)]
         dataset = Dataset(train_imgs, test_imgs, './', data_aug=True)
     else:
         dataset = Dataset(None, test_imgs, './')

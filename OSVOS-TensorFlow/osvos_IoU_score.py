@@ -14,20 +14,19 @@ Please consider citing the original paper if you use this code.
 
 import os
 import sys
-root_folder = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(root_folder))
 import numpy as np
 
 
-def mean_iou_score(annotation_imgs, result_imgs):
+def mean_iou_score(annotation_imgs, result_imgs,show_per_frame_iou):
     i = 1
     iou_score_sum = 0
     for a_img, r_img in zip(annotation_imgs, result_imgs):
         intersection = np.logical_and(a_img, r_img)
         union = np.logical_or(a_img, r_img)
         iou_score = np.sum(intersection) / np.sum(union)
-        # Uncomment next line to print IoU score of individual frame
-        # print("Frame : "+str(i-1)+" score : "+str(iou_score))
+        if show_per_frame_iou:
+            print("Frame : "+str(i-1)+" score : "+str(iou_score))
+            
         iou_score_sum += iou_score
         i += 1
     

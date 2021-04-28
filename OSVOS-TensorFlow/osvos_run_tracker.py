@@ -21,6 +21,7 @@ import uuid
 import numpy as np
 import cv2
 import glob
+import imageio
 from osvos_train_test import train_and_test_osvos
 from osvos_IoU_score import mean_iou_score
 from filterpy.common import Q_discrete_white_noise
@@ -30,9 +31,14 @@ from osvos_kalman_tracker import item
 
 if __name__ == '__main__':
     # User defined parameters
-    seq_name = "car-shadow"
-    gpu_id = 0
-    train_model = False
+    seq_name = "car-shadow"         # Change to train and test other data sets. Should be the name of the folder containing the images.
+    gpu_id = 0                      # Change according to your GPU id.
+    train_model = False             # Change to train/not train the model. If set to False, you need pre-trained model.
+    max_training_iters = 2000       # Change this according to the model name if using the pretrained models
+    train_img_name = '00000.jpg'    # Change to train with a different frame
+    annot_img_name = '00000.png'    # This should be the same as the 'train_img_name'. Extensions of file should used accordingly.
+    show_per_frame_iou = False       # Set this to True to show IoU score of every frame, False to show just mean IoU score.
+
     result_path = os.path.join('DAVIS', 'Results', 'Segmentations', '480p', 'OSVOS', seq_name)
     kalman_result_path = os.path.join('DAVIS', 'KalmanResults', 'Segmentations', '480p', 'OSVOS', seq_name)
     og_img_path = os.path.join('DAVIS', 'JPEGImages', '480p', seq_name)
@@ -46,11 +52,11 @@ if __name__ == '__main__':
     og_img = [cv2.imread(img) for img in og_img_filenames]
     
     result_filenames = glob.glob(os.path.join(result_path, '*.png'))
-    # print(len(annotation_filenames))
-    # print(len(result_filenames))
+   
     # Train and test or just test, depending on the value of "train_model"
     if len(result_filenames)==0:
-        train_and_test_osvos(seq_name, gpu_id, result_path, train_model)
+        train_and_test_osvos(seq_name, gpu_id, result_path, train_model, max_training_iters, train_img_name, annot_img_name)
+        result_filenames = glob.glob(os.path.join(result_path, '*.png'))
         result_filenames.sort()
         result_imgs = [cv2.imread(img,0) for img in result_filenames]
     else:
@@ -61,6 +67,7 @@ if __name__ == '__main__':
     tracker=None
     overlay_color = [255, 0, 0]
     transparency = 0.6
+    nameCounter = 0
     for img_p,frame in zip(result_imgs,og_img):
         segmentationMask=img_p
         contours, hierarchy =cv2.findContours(segmentationMask,1, 2)
@@ -73,7 +80,10 @@ if __name__ == '__main__':
         cv2.drawContours(newSegmentationMask,[maxArea],-1,(255,255,255),thickness=cv2.FILLED)
 
         # Write new segmentation mask to file
-        # TODO
+        if not os.path.exists(kalman_result_path):
+            os.makedirs(kalman_result_path)
+        cv2.imwrite(os.path.join(kalman_result_path, os.path.basename(annotation_filenames[nameCounter])), newSegmentationMask)
+        nameCounter += 1
 
         # Show result after adding tracking ID and Kalman tracker
         newSegmentationMask = newSegmentationMask//np.max(newSegmentationMask)
@@ -102,7 +112,17 @@ if __name__ == '__main__':
     if len(result_filenames)==0:
         print("Results not found!")
     else:
-        mean_iou_score(annotation_imgs,result_imgs)
-        
+        print("IoU Score(s) with noise : ")
+        mean_iou_score(annotation_imgs,result_imgs,show_per_frame_iou)
+
+    kalman_result_path = glob.glob(os.path.join(kalman_result_path, '*.png'))
+
+    if len(kalman_result_path)==0:
+        print("Results not found!")
+    else:
+        kalman_result_path.sort()
+        kalman_result_path = [cv2.imread(img,0) for img in kalman_result_path]
+        print("IoU Score(s) after removing noise : ")
+        mean_iou_score(annotation_imgs,kalman_result_path,show_per_frame_iou)
 
     
