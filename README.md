@@ -37,7 +37,7 @@ While implementing the tracking, we noticed that the output from the OSVOS model
 We considered this scenario as noise because the provided annotation suggests that the tracker should detect only one car. And therefore, removed the other car from the segmentation mask.
 
 ## Future Enhancements:
-For future enhancements, we would try to implement multi-object tracking.
+For future enhancements, we would try to implement multi-object tracking and the Boundary-Snapping feature present in the original OSVOS.
 
 ## Citation:
 	@Inproceedings{Cae+17,
