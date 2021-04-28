@@ -22,6 +22,7 @@ import numpy as np
 import cv2
 import glob
 import imageio
+from PIL import Image
 from osvos_train_test import train_and_test_osvos
 from osvos_IoU_score import mean_iou_score
 from filterpy.common import Q_discrete_white_noise
@@ -82,7 +83,7 @@ if __name__ == '__main__':
         # Write new segmentation mask to file
         if not os.path.exists(kalman_result_path):
             os.makedirs(kalman_result_path)
-        cv2.imwrite(os.path.join(kalman_result_path, os.path.basename(annotation_filenames[nameCounter])), newSegmentationMask)
+        cv2.imwrite(os.path.join(kalman_result_path, os.path.basename(result_filenames[nameCounter])), newSegmentationMask)
         nameCounter += 1
 
         # Show result after adding tracking ID and Kalman tracker
@@ -108,21 +109,41 @@ if __name__ == '__main__':
         cv2.imshow('frame',frame)
         cv2.waitKey(300)
 
-
-    if len(result_filenames)==0:
-        print("Results not found!")
+    if seq_name=="recycling":
+        test_frames = sorted(os.listdir(os.path.join('DAVIS', 'JPEGImages', '480p', seq_name)))
+        overlay_color = [255, 0, 0]
+        transparency = 0.6
+        plt.ion()
+        for img_p in test_frames:
+            frame_num = img_p.split('.')[0]
+            img = np.array(Image.open(os.path.join('DAVIS', 'JPEGImages', '480p', seq_name, img_p)))
+            mask = np.array(Image.open(os.path.join(result_path, frame_num+'.png')))
+            mask = mask//np.max(mask)
+            im_over = np.ndarray(img.shape)
+            im_over[:, :, 0] = (1 - mask) * img[:, :, 0] + mask * (overlay_color[0]*transparency + (1-transparency)*img[:, :, 0])
+            im_over[:, :, 1] = (1 - mask) * img[:, :, 1] + mask * (overlay_color[1]*transparency + (1-transparency)*img[:, :, 1])
+            im_over[:, :, 2] = (1 - mask) * img[:, :, 2] + mask * (overlay_color[2]*transparency + (1-transparency)*img[:, :, 2])
+            plt.imshow(im_over.astype(np.uint8))
+            plt.axis('off')
+            plt.show()
+            plt.pause(0.01)
+            plt.clf()
+        print("Cannot calculate IoU for recycling data!")
     else:
-        print("IoU Score(s) with noise : ")
-        mean_iou_score(annotation_imgs,result_imgs,show_per_frame_iou)
+        if len(result_filenames)==0:
+            print("Results not found!")
+        else:
+            print("IoU Score(s) with noise : ")
+            mean_iou_score(annotation_imgs,result_imgs,show_per_frame_iou)
 
-    kalman_result_path = glob.glob(os.path.join(kalman_result_path, '*.png'))
+        kalman_result_path = glob.glob(os.path.join(kalman_result_path, '*.png'))
 
-    if len(kalman_result_path)==0:
-        print("Results not found!")
-    else:
-        kalman_result_path.sort()
-        kalman_result_path = [cv2.imread(img,0) for img in kalman_result_path]
-        print("IoU Score(s) after removing noise : ")
-        mean_iou_score(annotation_imgs,kalman_result_path,show_per_frame_iou)
+        if len(kalman_result_path)==0:
+            print("Results not found!")
+        else:
+            kalman_result_path.sort()
+            kalman_result_path = [cv2.imread(img,0) for img in kalman_result_path]
+            print("IoU Score(s) after removing noise : ")
+            mean_iou_score(annotation_imgs,kalman_result_path,show_per_frame_iou)
 
     

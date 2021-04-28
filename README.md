@@ -10,7 +10,10 @@ OSVOS is a method that tackles the task of semi-supervised video object segmenta
 
 ## Installation and dependencies:
 - All the dependencies are listed in the requirement.txt. The original OSVOS code was written using Tensorflow v1. 
-Therefore, our implementation requires specific version of Python and Tensorflow. We have tested our code with Python 3.6 and Tensorflow v1.15.0. However, any Python<3.6 and Tensorflow v1.x should work.
+Therefore, our implementation requires specific version of Python and Tensorflow. We have tested our code with Python 3.6 and Tensorflow v1.15.0. However, any Python<3.6 and Tensorflow v1.x should work.  
+Download pre-trained models from [here](https://drive.google.com/file/d/1KWlQAV8Ss17gXamHzPi-qmF5QVE8bJ-u/view?usp=sharing)             
+**Extract the pre-trained models to the models directory. It should create a folder for each dataset with its respective model in it.**
+**Please look at the project specific instructions below to test recycling data.**    
 
 ## Implementation:
 1. We either train the network using one of the video frames and its annotated segmentation mask or we use the pre-trained model.
@@ -31,6 +34,23 @@ The user can set different variables accoring to their requirements in the ```os
 ```train_img_name = '00000.jpg'```    - Change to train with a different frame.   
 ```annot_img_name = '00000.png'```    - This should be the same as the 'train_img_name'. Extensions of file should used accordingly.   
 ```show_per_frame_iou = False```       - Set this to True to show IoU score of every frame, False to show just mean IoU score.   
+
+## Instructions to test of recycling data
+- Due to lack of annotation data in the recycling data, we were unable to calculate the IoU score.    
+- We tried to track the green soda bottle in the dataset.    
+- It succeeded for the most part except the beginning of frames where it tried to track another similarly shaped object as the soda bottle was not yet in frame.     
+        
+To test with recycling data, set the following - 
+```
+seq_name = "recycling"         # Change to train and test other data sets. Should be the name of the folder containing the images.      
+gpu_id = 0                      # Change according to your GPU id.               
+train_model = False             # Change to train/not train the model. If set to False, you need pre-trained model.            
+max_training_iters = 500       # Change this according to the model name if using the pretrained models              
+train_img_name = '00075.png'    # Change to train with a different frame               
+annot_img_name = '00075.png'    # This should be the same as the 'train_img_name'. Extensions of file should used accordingly.             
+show_per_frame_iou = False 
+```
+
 
 ## Discussion:
 While implementing the tracking, we noticed that the output from the OSVOS model is actually more accurate with respect to the original image. It was actually able to detect the other cars in the frames. This is likely because OSVOS is based on network like VGG16 which was trained on the ImageNet and therefore was able to detect the other cars.   
